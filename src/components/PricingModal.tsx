@@ -31,7 +31,7 @@ const plans = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '$19',
+    price: '₹299',
     period: '/month',
     description: 'For professionals who need more power',
     features: [

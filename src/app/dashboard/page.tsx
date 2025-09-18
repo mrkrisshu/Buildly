@@ -18,7 +18,8 @@ import {
   FileText,
   Globe,
   Palette,
-  Crown
+  Crown,
+  Key
 } from 'lucide-react';
 import PricingModal from '@/components/PricingModal';
 
@@ -31,6 +32,8 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'prompt' | 'code' | 'preview'>('prompt');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   useEffect(() => {
     // Check for dark mode
@@ -59,6 +62,12 @@ export default function Dashboard() {
   const generateWebsite = async () => {
     if (!prompt.trim()) return;
     
+    if (!geminiApiKey.trim()) {
+      alert('Please enter your Gemini API key first.');
+      setShowApiKeyInput(true);
+      return;
+    }
+    
     setIsGenerating(true);
     try {
       const response = await fetch('/api/generate', {
@@ -66,7 +75,10 @@ export default function Dashboard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          prompt,
+          apiKey: geminiApiKey 
+        }),
       });
 
       if (!response.ok) {
@@ -78,7 +90,7 @@ export default function Dashboard() {
       setActiveTab('code');
     } catch (error) {
       console.error('Error generating website:', error);
-      alert('Failed to generate website. Please try again.');
+      alert('Failed to generate website. Please check your API key and try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -172,6 +184,50 @@ export default function Dashboard() {
             </div>
             
             <div className="flex-1 flex flex-col gap-4">
+              {/* Gemini API Key Input */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Gemini API Key
+                  </label>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+                    className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                  >
+                    <Key className="w-3 h-3" />
+                    {showApiKeyInput ? 'Hide' : 'Show'}
+                  </motion.button>
+                </div>
+                {showApiKeyInput && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <input
+                      type="password"
+                      value={geminiApiKey}
+                      onChange={(e) => setGeminiApiKey(e.target.value)}
+                      placeholder="Enter your Gemini API key..."
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 mb-3"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Get your API key from{' '}
+                      <a 
+                        href="https://makersuite.google.com/app/apikey" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-600 underline"
+                      >
+                        Google AI Studio
+                      </a>
+                    </p>
+                  </motion.div>
+                )}
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Describe your website

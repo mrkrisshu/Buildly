@@ -2,15 +2,15 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #1a1a1a;
+  --foreground: #0f172a;
   --primary: #2563eb;
   --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
-  --secondary-foreground: #1e293b;
+  --secondary-foreground: #0f172a;
   --muted: #f8fafc;
-  --muted-foreground: #475569;
+  --muted-foreground: #334155;
   --accent: #f1f5f9;
-  --accent-foreground: #1e293b;
+  --accent-foreground: #0f172a;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --border: #e2e8f0;
@@ -97,12 +97,12 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 700;
-  color: #2563eb; /* fallback color for better visibility */
+  color: #1d4ed8; /* fallback color for better visibility */
 }
 
 .dark .gradient-text {

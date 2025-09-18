@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, apiKey } = await request.json();
 
     if (!prompt) {
       return NextResponse.json(
@@ -14,12 +14,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if we have a real Google AI API key
-    const hasRealApiKey = process.env.GOOGLE_AI_API_KEY && 
-      process.env.GOOGLE_AI_API_KEY !== 'AIzaSyDummy_Key_For_Development_Testing_Only' &&
-      process.env.GOOGLE_AI_API_KEY.startsWith('AIzaSy');
+    // Use the provided API key or fall back to environment variable
+    const geminiApiKey = apiKey || process.env.GOOGLE_AI_API_KEY;
 
-    if (!hasRealApiKey) {
+    // Check if we have a valid API key
+    const hasValidApiKey = geminiApiKey && 
+      geminiApiKey !== 'AIzaSyDummy_Key_For_Development_Testing_Only' &&
+      geminiApiKey.startsWith('AIzaSy');
+
+    if (!hasValidApiKey) {
       // Return a mock response for development
       const mockHtml = `
 <!DOCTYPE html>
@@ -64,7 +67,7 @@ export async function POST(request: NextRequest) {
         </div>
         <div class="section">
             <h2>About</h2>
-            <p>This website was generated using AI technology. In production, you would need to configure a real Google AI API key to generate custom websites based on your specific requirements.</p>
+            <p>This website was generated using AI technology. Please provide a valid Gemini API key to generate custom websites based on your specific requirements.</p>
         </div>
         <div class="section">
             <h2>Features</h2>
@@ -78,10 +81,11 @@ export async function POST(request: NextRequest) {
     </div>
 </body>
 </html>`;
-      
+
       return NextResponse.json({ code: mockHtml });
     }
 
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const enhancedPrompt = `
