@@ -15,7 +15,7 @@ const plans = [
   {
     id: 'free',
     name: 'Free',
-    price: '$0',
+    price: '₹0',
     period: '/month',
     description: 'Perfect for trying out our AI website builder',
     features: [
@@ -33,36 +33,19 @@ const plans = [
     name: 'Pro',
     price: '₹299',
     period: '/month',
-    description: 'For professionals who need more power',
+    description: 'For professionals who need unlimited power',
     features: [
       'Unlimited website generations',
-      'Premium templates',
-      'Advanced customization',
-      'Priority support',
-      'Custom domains',
-      'SEO optimization'
+      'Unlimited premium templates',
+      'Unlimited advanced customization',
+      'Unlimited priority support',
+      'Unlimited custom domains',
+      'Unlimited SEO optimization',
+      'Unlimited everything!'
     ],
-    priceId: 'price_pro_monthly',
+    priceId: 'price_1S8mLp3oROM7RvFug1MhRFaM',
     popular: true,
     color: 'from-blue-500 to-purple-600'
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: '$49',
-    period: '/month',
-    description: 'For teams and agencies',
-    features: [
-      'Everything in Pro',
-      'Team collaboration',
-      'White-label solutions',
-      'API access',
-      'Custom integrations',
-      'Dedicated support'
-    ],
-    priceId: 'price_enterprise_monthly',
-    popular: false,
-    color: 'from-purple-500 to-pink-600'
   }
 ];
 
@@ -147,7 +130,7 @@ export default function PricingModal({ isOpen, onClose, userEmail, userId }: Pri
 
             {/* Pricing Cards */}
             <div className="p-6">
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                 {plans.map((plan) => (
                   <motion.div
                     key={plan.id}
@@ -171,7 +154,6 @@ export default function PricingModal({ isOpen, onClose, userEmail, userId }: Pri
                       <div className={`w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-r ${plan.color} flex items-center justify-center`}>
                         {plan.id === 'free' && <Sparkles className="w-6 h-6 text-white" />}
                         {plan.id === 'pro' && <Zap className="w-6 h-6 text-white" />}
-                        {plan.id === 'enterprise' && <Crown className="w-6 h-6 text-white" />}
                       </div>
                       <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                         {plan.name}

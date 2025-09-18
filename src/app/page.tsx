@@ -1,16 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useTheme } from '@/contexts/ThemeProvider';
 import { useAuth } from '@/contexts/AuthProvider';
 import { motion } from 'framer-motion';
-import { Sparkles, Zap, Palette, ArrowRight, Moon, Sun, LogOut, User } from 'lucide-react';
+import { Sparkles, Zap, Palette, ArrowRight, LogOut, User } from 'lucide-react';
 import ParticleBackground from '@/components/ParticleBackground';
 import AuthModal from '@/components/AuthModal';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const { theme, toggleTheme } = useTheme();
   const { user, signOut, loading } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -115,19 +113,6 @@ export default function Home() {
               )}
             </>
           )}
-          
-          <motion.button
-            whileHover={{ scale: 1.1, rotate: 180 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={toggleTheme}
-            className="glass p-4 rounded-full hover:scale-105 transition-all duration-300 pulse-glow"
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-6 h-6 text-yellow-400" />
-            ) : (
-              <Moon className="w-6 h-6 text-blue-600" />
-            )}
-          </motion.button>
         </div>
       </motion.header>
 
@@ -185,13 +170,6 @@ export default function Home() {
                 Get Started <ArrowRight className="w-5 h-5" />
               </motion.button>
             )}
-            <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              className="glass px-10 py-5 rounded-full font-bold text-lg hover:shadow-2xl transition-all duration-300 text-slate-800 dark:text-slate-100"
-            >
-              Watch Demo
-            </motion.button>
           </motion.div>
         </motion.div>
 
@@ -309,7 +287,7 @@ export default function Home() {
         transition={{ delay: 2, duration: 0.8 }}
         className="absolute bottom-0 left-0 right-0 p-6 text-center text-slate-500 dark:text-slate-400 z-10"
       >
-        <p>&copy; 2024 Buildly. Powered by AI. Built with ❤️</p>
+        <p>&copy; @2025 Buildly. Built with ❤️. Developed by Krishna.</p>
       </motion.footer>
 
       {/* Auth Modal */}

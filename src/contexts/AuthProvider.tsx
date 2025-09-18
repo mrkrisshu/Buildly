@@ -8,10 +8,12 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isPro: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error?: any }>;
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: any }>;
+  updateProStatus: (status: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,8 +22,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -38,10 +46,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
+    // Check for stored pro status
+    const storedProStatus = localStorage.getItem('isPro');
+    if (storedProStatus === 'true') {
+      setIsPro(true);
+    }
+
     return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    if (!supabase) {
+      return { error: { message: 'Authentication service not available' } };
+    }
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -56,6 +74,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!supabase) {
+      return { error: { message: 'Authentication service not available' } };
+    }
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -65,10 +87,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
   };
 
   const resetPassword = async (email: string) => {
+    if (!supabase) {
+      return { error: { message: 'Authentication service not available' } };
+    }
+    
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
@@ -76,14 +103,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const updateProStatus = (status: boolean) => {
+    setIsPro(status);
+    localStorage.setItem('isPro', status.toString());
+  };
+
   const value = {
     user,
     session,
     loading,
+    isPro,
     signUp,
     signIn,
     signOut,
     resetPassword,
+    updateProStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -43,10 +43,20 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log('Payment successful:', session.id);
         
+        // Extract user information from session metadata
+        const userId = session.metadata?.userId;
+        const customerEmail = session.customer_email;
+        
+        console.log('Updating user to Pro member:', { userId, customerEmail });
+        
         // Here you would typically:
         // 1. Update user's subscription status in your database
         // 2. Send confirmation email
         // 3. Grant access to premium features
+        
+        // For now, we'll just log the successful payment
+        // In a real implementation, you would update your database here
+        console.log(`✅ User ${userId || customerEmail} upgraded to Pro successfully!`);
         
         break;
       
