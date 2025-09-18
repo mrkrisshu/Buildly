@@ -52,7 +52,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           setSuccess('Password reset email sent!');
         }
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

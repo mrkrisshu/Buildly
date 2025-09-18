@@ -23,9 +23,6 @@ export const getSupabaseClient = () => {
   }
 };
 
-// Lazy initialization - only create client when needed
-let supabaseClient: ReturnType<typeof createClient> | null = null;
-
 // Export the client for backward compatibility
 export const supabase = typeof window !== 'undefined' ? getSupabaseClient() : null;
 

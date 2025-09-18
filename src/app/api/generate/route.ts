@@ -1,9 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
-
 export async function POST(request: NextRequest) {
+  // First try with user's API key, then fallback to environment variable
+  let geminiApiKey: string | undefined;
+  let usingFallbackKey = false;
+
   try {
     const { prompt, apiKey, isMultiPage = false, customizationSettings } = await request.json();
 
@@ -14,13 +16,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // First try with user's API key, then fallback to environment variable
-    let geminiApiKey = apiKey;
-    let usingFallbackKey = false;
-
     // If user provided a key, validate and use it
-    if (geminiApiKey && geminiApiKey.trim().startsWith('AIzaSy') && geminiApiKey.trim().length >= 35) {
-      geminiApiKey = geminiApiKey.trim();
+    if (apiKey && apiKey.trim().startsWith('AIzaSy') && apiKey.trim().length >= 35) {
+      geminiApiKey = apiKey.trim();
       console.log('Using user-provided API key');
     } else {
       // No user key provided or invalid format, use environment key
@@ -49,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Attempting to generate content with Gemini API...');
-    const genAI = new GoogleGenerativeAI(geminiApiKey);
+    const genAI = new GoogleGenerativeAI(geminiApiKey!);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     // Build customization instructions
@@ -187,7 +185,7 @@ Please generate only the HTML code without any explanations or markdown formatti
     console.error('Error generating website:', error);
     
     // If there was an error and we were using user key, try fallback
-    if (apiKey && process.env.GOOGLE_AI_API_KEY && process.env.GOOGLE_AI_API_KEY !== apiKey) {
+    if (geminiApiKey && process.env.GOOGLE_AI_API_KEY && process.env.GOOGLE_AI_API_KEY !== geminiApiKey) {
       try {
         console.log('Retrying with fallback API key due to error');
         const fallbackGenAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);

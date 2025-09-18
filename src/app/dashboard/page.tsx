@@ -10,7 +10,6 @@ import {
   Code, 
   Eye, 
   Download, 
-  Settings, 
   LogOut, 
   User, 
   Wand2, 
@@ -80,7 +79,7 @@ export default function Dashboard() {
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [updateProStatus]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -781,10 +780,6 @@ export default function Dashboard() {
           setShowTemplateLibrary(false);
         }}
         isPro={isPro}
-        onUpgrade={() => {
-          setShowTemplateLibrary(false);
-          setShowPricingModal(true);
-        }}
       />
 
       {/* Advanced Customization Modal */}
