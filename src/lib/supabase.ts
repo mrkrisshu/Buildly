@@ -2,11 +2,14 @@
 const createMockClient = () => ({
   auth: {
     getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-    signUp: () => Promise.resolve({ data: null, error: { message: 'Authentication not configured' } }),
-    signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Authentication not configured' } }),
+    onAuthStateChange: (callback: (event: string, session: any) => void) => {
+      // Mock implementation that accepts a callback
+      return { data: { subscription: { unsubscribe: () => {} } } };
+    },
+    signUp: (credentials: any) => Promise.resolve({ data: null, error: { message: 'Authentication not configured' } }),
+    signInWithPassword: (credentials: any) => Promise.resolve({ data: null, error: { message: 'Authentication not configured' } }),
     signOut: () => Promise.resolve({ error: null }),
-    resetPasswordForEmail: () => Promise.resolve({ error: { message: 'Authentication not configured' } }),
+    resetPasswordForEmail: (email: string, options?: any) => Promise.resolve({ error: { message: 'Authentication not configured' } }),
   }
 });
 

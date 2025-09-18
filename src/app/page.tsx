@@ -39,7 +39,7 @@ export default function Home() {
       opacity: 1,
       transition: {
         duration: 0.8,
-        ease: 'easeOut',
+        ease: "easeOut" as const,
       },
     },
   };
@@ -50,7 +50,7 @@ export default function Home() {
       transition: {
         duration: 4,
         repeat: Infinity,
-        ease: 'easeInOut',
+        ease: "easeInOut" as const,
       },
     },
   };
