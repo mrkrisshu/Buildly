@@ -19,7 +19,8 @@ import {
   Palette,
   Crown,
   Key,
-  Layout
+  Layout,
+  Presentation
 } from 'lucide-react';
 import PricingModal from '@/components/PricingModal';
 import TemplateLibrary from '@/components/TemplateLibrary';
@@ -296,6 +297,15 @@ export default function Dashboard() {
             >
               <Layout className="w-4 h-4 text-blue-500" />
               <span className="text-sm font-medium">Templates</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.push('/ppt-generator')}
+              className="glass px-4 py-2 rounded-full flex items-center gap-2 hover:bg-green-500/20 transition-all duration-300"
+            >
+              <Presentation className="w-4 h-4 text-green-500" />
+              <span className="text-sm font-medium">PPT Generator</span>
             </motion.button>
             {isPro && (
               <motion.button

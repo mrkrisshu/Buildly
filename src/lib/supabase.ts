@@ -10,7 +10,7 @@ export const getSupabaseClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'your_supabase_url' || supabaseAnonKey === 'your_supabase_anon_key') {
     console.warn('Supabase environment variables are not set. Authentication features will be disabled.');
     return null;
   }
@@ -23,8 +23,8 @@ export const getSupabaseClient = () => {
   }
 };
 
-// Export the client for backward compatibility
-export const supabase = typeof window !== 'undefined' ? getSupabaseClient() : null;
+// Export the client for backward compatibility - lazy initialization
+export const supabase = null; // Will be initialized when getSupabaseClient() is called
 
 export type User = {
   id: string;
