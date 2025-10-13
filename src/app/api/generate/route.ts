@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Attempting to generate content with Gemini API...');
     const genAI = new GoogleGenerativeAI(geminiApiKey!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5' });
+
 
     // Build customization instructions
     let customizationInstructions = '';
@@ -189,7 +190,8 @@ Please generate only the HTML code without any explanations or markdown formatti
       try {
         console.log('Retrying with fallback API key due to error');
         const fallbackGenAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-        const fallbackModel = fallbackGenAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const fallbackModel = fallbackGenAI.getGenerativeModel({ model: 'gemini-1.5' });
+
         
         const enhancedPrompt = `
 You are an expert web developer. Create a complete, modern, and responsive HTML website based on the following description. 
