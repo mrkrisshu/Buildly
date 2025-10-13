@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Attempting to generate PPT content with Gemini API...');
     const genAI = new GoogleGenerativeAI(geminiApiKey!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const enhancedPrompt = `
 You are an expert presentation designer and content creator. Create a comprehensive and engaging presentation based on the following topic.
@@ -175,10 +175,13 @@ Make sure the JSON is valid and properly formatted. Focus on creating valuable, 
           }
           
           try {
-            const searchQuery = pexelsAPI.extractImageKeywords(slide.title, slide.content);
+            // Combine slide title + first bullet point (or main prompt) for relevance
+const searchQuery = `${prompt} ${slide.title} ${slide.content[0]}`.replace(/\s+/g, ' ').trim();
+
             console.log(`Searching for images with query: "${searchQuery}"`);
             
-            const photos = await pexelsAPI.searchPhotos(searchQuery, 1);
+            const photos = await pexelsAPI.searchPhotos(searchQuery, 1, { orientation: 'landscape', size: 'large' });
+
             if (photos.length > 0) {
               slide.image = photos[0];
               console.log(`Found image for slide "${slide.title}": ${photos[0].alt}`);
