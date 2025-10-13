@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Attempting to generate content with Gemini API...');
     const genAI = new GoogleGenerativeAI(geminiApiKey!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5' });
+   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 
     // Build customization instructions
@@ -190,7 +190,7 @@ Please generate only the HTML code without any explanations or markdown formatti
       try {
         console.log('Retrying with fallback API key due to error');
         const fallbackGenAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-        const fallbackModel = fallbackGenAI.getGenerativeModel({ model: 'gemini-1.5' });
+        const fallbackModel = fallbackGenAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         
         const enhancedPrompt = `
