@@ -180,7 +180,8 @@ const searchQuery = `${prompt} ${slide.title} ${slide.content[0]}`.replace(/\s+/
 
             console.log(`Searching for images with query: "${searchQuery}"`);
             
-            const photos = await pexelsAPI.searchPhotos(searchQuery, 1, { orientation: 'landscape', size: 'large' });
+           const photos = await pexelsAPI.searchPhotos(searchQuery, 1);
+
 
             if (photos.length > 0) {
               slide.image = photos[0];
