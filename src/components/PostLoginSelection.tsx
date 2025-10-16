@@ -1,14 +1,14 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Globe, FileText, ArrowRight, X, Sparkles, Code, Presentation } from 'lucide-react';
+import { Globe, ArrowRight, X, Sparkles, Presentation } from 'lucide-react';
 
 interface PostLoginSelectionProps {
   onClose: () => void;
 }
 
-export default function PostLoginSelection({ onClose }: PostLoginSelectionProps) {
+export function PostLoginSelection({ onClose }: PostLoginSelectionProps) {
   const router = useRouter();
 
   const handleSelection = (path: string) => {

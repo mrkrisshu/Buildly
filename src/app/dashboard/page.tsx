@@ -27,12 +27,9 @@ import PricingModal from '@/components/PricingModal';
 import TemplateLibrary from '@/components/TemplateLibrary';
 import AdvancedCustomization from '@/components/AdvancedCustomization';
 
-type DashboardMode = 'input' | 'generating' | 'results';
 type ViewMode = 'desktop' | 'tablet' | 'mobile';
 type ResultTab = 'preview' | 'code' | 'files';
 type Mode = 'input' | 'generating' | 'results';
-type ResultTab = 'preview' | 'code' | 'files';
-type ViewMode = 'desktop' | 'tablet' | 'mobile';
 
 interface MultiPageData {
   pages: Record<string, string>;
@@ -48,11 +45,9 @@ export default function Dashboard() {
   const [activeResultTab, setActiveResultTab] = useState<ResultTab>('preview');
   const [viewMode, setViewMode] = useState<ViewMode>('desktop');
   const [copied, setCopied] = useState(false);
-  const [activeFile, setActiveFile] = useState<string>('');
   const [generationProgress, setGenerationProgress] = useState(0);
   
   // Settings State
-  const [prompt, setPrompt] = useState('');
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [isMultiPage, setIsMultiPage] = useState(false);
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
@@ -66,7 +61,6 @@ export default function Dashboard() {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [showCustomization, setShowCustomization] = useState(false);
-  const [customizationSettings, setCustomizationSettings] = useState({});
 
   // Load saved API key on component mount
   useEffect(() => {
@@ -89,7 +83,7 @@ export default function Dashboard() {
     }
   };
 
-  const generateWebsite = async () => {
+  const generateWebsite = async (prompt: string) => {
     if (!prompt.trim()) return;
     
     if (!geminiApiKey.trim()) {
@@ -343,9 +337,7 @@ export default function Dashboard() {
             <div className="h-full flex items-center justify-center">
               <div className="w-full max-w-4xl mx-auto px-6">
                 <HeroWave 
-                  onGenerate={generateWebsite}
-                  prompt={prompt}
-                  setPrompt={setPrompt}
+                  onPromptSubmit={generateWebsite}
                   className="w-full"
                 />
               </div>
@@ -568,7 +560,7 @@ export default function Dashboard() {
                                 key={filename}
                                 whileHover={{ scale: 1.02 }}
                                 className="p-4 bg-white/5 rounded-lg border border-white/20 cursor-pointer hover:bg-white/10 transition-all"
-                                onClick={() => setActiveFile(filename)}
+                                onClick={() => {}}
                               >
                                 <div className="flex items-center gap-3">
                                   <FileText className="w-5 h-5 text-blue-400" />
@@ -613,8 +605,7 @@ export default function Dashboard() {
         <AdvancedCustomization
           isOpen={showCustomization}
           onClose={() => setShowCustomization(false)}
-          onApplyCustomization={(settings) => {
-            setCustomizationSettings(settings);
+          onApplyCustomization={() => {
             setShowCustomization(false);
           }}
           isPro={isPro}

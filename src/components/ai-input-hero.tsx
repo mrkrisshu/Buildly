@@ -110,7 +110,9 @@ export function HeroWave({ className, style, extendLeftPx = 320, buttonText = "G
     schedule(step, 400);
     return () => {
       const currentTypingState = typingStateRef.current;
-      currentTypingState.running = false;
+      if (currentTypingState) {
+        currentTypingState.running = false;
+      }
       clearTimers();
     };
   }, [prompt]);

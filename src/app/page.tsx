@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthProvider';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { 
   ArrowRight, 
@@ -22,11 +22,13 @@ import {
 } from 'lucide-react';
 import { AuthUI } from '@/components/auth-fuse';
 import { useRouter } from 'next/navigation';
+import { PostLoginSelection } from '@/components/PostLoginSelection';
 export default function Home() {
   const { user, signOut, loading, signIn, signUp } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
+  const [showPostLoginSelection, setShowPostLoginSelection] = useState(false);
   const router = useRouter();
 
   // Prevent hydration mismatch by ensuring component is mounted
