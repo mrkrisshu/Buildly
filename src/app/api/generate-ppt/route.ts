@@ -14,14 +14,7 @@ interface PPTData {
   slides: Slide[];
 }
 
-interface ColorTheme {
-  name: string;
-  primary: string;
-  secondary: string;
-  accent: string;
-  background: string;
-  text: string;
-}
+
 
 export async function POST(request: NextRequest) {
   let geminiApiKey: string | undefined;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import MonacoEditor from '@monaco-editor/react';
 import { 
   Code, 
@@ -18,13 +18,10 @@ import {
   Palette,
   Crown,
   Key,
-  Layout,
-  Presentation,
   ArrowLeft,
   Monitor,
   Smartphone,
   Tablet,
-  ExternalLink,
   Copy,
   Check
 } from 'lucide-react';
@@ -43,7 +40,6 @@ export default function Dashboard() {
   
   // Core state
   const [mode, setMode] = useState<DashboardMode>('input');
-  const [prompt, setPrompt] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -304,7 +300,6 @@ export default function Dashboard() {
                   placeholder="Create a modern portfolio website for a web developer..."
                   buttonText={isGenerating ? "Generating..." : "Generate Website"}
                   onPromptSubmit={(value) => {
-                    setPrompt(value);
                     generateWebsite(value);
                   }}
                 />
@@ -655,14 +650,15 @@ export default function Dashboard() {
 
       {/* Modals */}
       {showPricingModal && (
-        <PricingModal onClose={() => setShowPricingModal(false)} />
+        <PricingModal isOpen={showPricingModal} onClose={() => setShowPricingModal(false)} />
       )}
       
       {showTemplateLibrary && (
         <TemplateLibrary 
+          isOpen={showTemplateLibrary}
+          isPro={isPro}
           onClose={() => setShowTemplateLibrary(false)}
-          onSelectTemplate={(template) => {
-            setPrompt(template.prompt);
+          onSelectTemplate={() => {
             setShowTemplateLibrary(false);
           }}
         />
@@ -670,12 +666,14 @@ export default function Dashboard() {
       
       {showCustomization && (
         <AdvancedCustomization
+          isOpen={showCustomization}
           onClose={() => setShowCustomization(false)}
-          onSave={(settings) => {
+          onApplyCustomization={(settings) => {
             setCustomizationSettings(settings);
             setShowCustomization(false);
           }}
-          currentSettings={customizationSettings}
+          isPro={isPro}
+          onUpgrade={() => setShowPricingModal(true)}
         />
       )}
     </div>
