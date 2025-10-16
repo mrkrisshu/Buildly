@@ -6,7 +6,7 @@ import { Slot } from "@radix-ui/react-slot";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Eye, EyeOff } from "lucide-react";
-import { BuildyLogo } from "./BuildyLogo";
+
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -345,6 +345,7 @@ interface AuthUIProps {
     onSignIn?: (email: string, password: string) => Promise<void>;
     onSignUp?: (email: string, password: string, fullName: string) => Promise<void>;
     onGoogleAuth?: () => Promise<void>;
+    onClose?: () => void;
     loading?: boolean;
     className?: string;
 }
@@ -371,7 +372,7 @@ const defaultSignUpContent = {
     }
 };
 
-export function AuthUI({ signInContent = {}, signUpContent = {}, onSignIn, onSignUp, loading }: AuthUIProps) {
+export function AuthUI({ signInContent = {}, signUpContent = {}, onSignIn, onSignUp, onClose, loading }: AuthUIProps) {
   const [isSignIn, setIsSignIn] = useState(true);
   const toggleForm = () => setIsSignIn((prev) => !prev);
 
@@ -410,9 +411,17 @@ export function AuthUI({ signInContent = {}, signUpContent = {}, onSignIn, onSig
         style={{ backgroundImage: `url(${currentContent.image.src})` }}
         key={currentContent.image.src}
       >
-        {/* Buildly Logo positioned at top */}
+        {/* Back Button positioned at top */}
         <div className="absolute top-8 left-8 z-20">
-          <BuildyLogo size="lg" className="drop-shadow-2xl" />
+          <button
+            onClick={() => onClose ? onClose() : window.history.back()}
+            className="flex items-center gap-2 px-4 py-2 bg-black/50 hover:bg-black/70 text-white rounded-lg transition-all duration-300 backdrop-blur-sm border border-white/20 hover:border-white/40"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
         </div>
 
         <div className="absolute inset-x-0 bottom-0 h-[100px] bg-gradient-to-t from-background to-transparent" />

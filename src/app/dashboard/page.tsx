@@ -22,6 +22,7 @@ import {
   Layout,
   Presentation
 } from 'lucide-react';
+import { HeroWave } from '@/components/ai-input-hero';
 import PricingModal from '@/components/PricingModal';
 import TemplateLibrary from '@/components/TemplateLibrary';
 import AdvancedCustomization, { CustomizationSettings } from '@/components/AdvancedCustomization';
@@ -398,6 +399,25 @@ export default function Dashboard() {
             </div>
             
             <div className="flex-1 flex flex-col gap-4">
+              {/* AI Input Hero Component */}
+              <div className="mb-4">
+                <HeroWave
+                  title="AI Website Generator"
+                  subtitle="Describe your vision and watch it come to life"
+                  placeholder="Create a modern portfolio website for a web developer..."
+                  buttonText={isGenerating ? "Generating..." : "Generate Website"}
+                  onPromptSubmit={(value) => {
+                    setPrompt(value);
+                    if (value.trim() && geminiApiKey.trim()) {
+                      generateWebsite();
+                    } else if (!geminiApiKey.trim()) {
+                      alert('Please enter your Gemini API key first.');
+                      setShowApiKeyInput(true);
+                    }
+                  }}
+                />
+              </div>
+
               {/* Gemini API Key Input */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -442,18 +462,6 @@ export default function Dashboard() {
                 )}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
-                  Describe your website
-                </label>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Create a modern portfolio website for a web developer with a dark theme, hero section, about me, projects gallery, and contact form..."
-                  className="w-full h-40 p-4 rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-white/50"
-                />
-              </div>
-              
               {/* Multi-page Toggle */}
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/20">
                 <div className="flex items-center gap-2">
@@ -476,26 +484,6 @@ export default function Dashboard() {
                   />
                 </motion.button>
               </div>
-              
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={generateWebsite}
-                disabled={!prompt.trim() || isGenerating}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-4 rounded-xl font-bold text-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    Generate Website
-                  </>
-                )}
-              </motion.button>
             </div>
 
             {/* Quick Templates */}

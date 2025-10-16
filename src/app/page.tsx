@@ -1031,6 +1031,7 @@ export default function Home() {
                   console.error('Google auth error:', error);
                 }
               }}
+              onClose={() => setAuthModalOpen(false)}
               loading={loading}
               className="rounded-2xl overflow-hidden"
             />
