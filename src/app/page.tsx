@@ -22,13 +22,11 @@ import {
 } from 'lucide-react';
 import { AuthUI } from '@/components/auth-fuse';
 import { useRouter } from 'next/navigation';
-import { PostLoginSelection } from '@/components/PostLoginSelection';
 export default function Home() {
   const { user, signOut, loading, signIn, signUp } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
-  const [showPostLoginSelection, setShowPostLoginSelection] = useState(false);
   const router = useRouter();
 
   // Prevent hydration mismatch by ensuring component is mounted
@@ -1014,7 +1012,7 @@ export default function Home() {
                     console.error('Sign in error:', error.message);
                   } else {
                     setAuthModalOpen(false);
-                    setShowPostLoginSelection(true);
+                    router.push('/dashboard');
                   }
                 } catch (error) {
                   console.error('Sign in error:', error);
@@ -1027,7 +1025,7 @@ export default function Home() {
                     console.error('Sign up error:', error.message);
                   } else {
                     setAuthModalOpen(false);
-                    setShowPostLoginSelection(true);
+                    router.push('/dashboard');
                   }
                 } catch (error) {
                   console.error('Sign up error:', error);
@@ -1038,7 +1036,7 @@ export default function Home() {
                   // Handle Google auth here - placeholder for now
                   console.log('Google auth not implemented yet');
                   setAuthModalOpen(false);
-                  setShowPostLoginSelection(true);
+                  router.push('/dashboard');
                 } catch (error) {
                   console.error('Google auth error:', error);
                 }
@@ -1051,14 +1049,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Post-Login Selection Modal */}
-      <AnimatePresence>
-        {showPostLoginSelection && (
-          <PostLoginSelection 
-            onClose={() => setShowPostLoginSelection(false)}
-          />
-        )}
-      </AnimatePresence>
+
     </div>
   );
 }
