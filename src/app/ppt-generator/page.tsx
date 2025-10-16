@@ -100,7 +100,7 @@ export default function PPTGenerator() {
   const [pptData, setPptData] = useState<PPTData | null>(null);
   const [error, setError] = useState('');
   const [selectedTheme, setSelectedTheme] = useState<ColorTheme>(colorThemes[0]);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [imageError, setImageError] = useState<string>('');
   const [showPricingModal, setShowPricingModal] = useState(false);
 
@@ -298,7 +298,14 @@ export default function PPTGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-slate-900 text-white">
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Web3 Background with grid and gradients */}
+      <div className="fixed inset-0 bg-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(139,92,246,0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(139,92,246,0.1)_1px,transparent_1px)] bg-[size:50px_50px]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-cyan-500/5" />
+      </div>
+
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -407,7 +414,7 @@ export default function PPTGenerator() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-white/80 mb-2">
                     Presentation Topic
                   </label>
                   <motion.textarea
@@ -415,13 +422,13 @@ export default function PPTGenerator() {
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Describe your presentation topic... e.g., 'Introduction to Machine Learning for beginners' or 'Marketing strategies for small businesses'"
-                    className="w-full h-24 sm:h-32 px-3 sm:px-4 py-2 sm:py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-300 text-sm sm:text-base"
+                    className="w-full h-24 sm:h-32 px-3 sm:px-4 py-2 sm:py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-300 text-sm sm:text-base"
                     disabled={isGenerating}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-white/80 mb-2">
                     Gemini API Key (Optional)
                   </label>
                   <input
@@ -429,17 +436,17 @@ export default function PPTGenerator() {
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="Enter your Gemini API key (optional)"
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
                     disabled={isGenerating}
                   />
-                  <p className="text-xs mt-1 text-slate-400">
+                  <p className="text-xs mt-1 text-white/60">
                     Leave empty to use the default API key
                   </p>
                 </div>
 
                 {/* Color Theme Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-white/80 mb-2">
                     <Palette className="w-4 h-4 inline mr-1" />
                     Color Theme
                   </label>
@@ -460,7 +467,7 @@ export default function PPTGenerator() {
                             className="w-4 h-4 rounded-full flex-shrink-0" 
                             style={{ backgroundColor: theme.primary }}
                           ></div>
-                          <span className="text-xs sm:text-sm text-slate-300 truncate">
+                          <span className="text-xs sm:text-sm text-white/80 truncate">
                             {theme.name}
                           </span>
                         </div>

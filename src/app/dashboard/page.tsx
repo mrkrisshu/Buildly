@@ -259,7 +259,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900">
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
       </div>
     );
@@ -270,12 +270,41 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* Web3 Background */}
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-30"
+        style={{
+          backgroundImage: [
+            "radial-gradient(80% 55% at 50% 52%, rgba(252,166,154,0.45) 0%, rgba(214,76,82,0.46) 27%, rgba(61,36,47,0.38) 47%, rgba(39,38,67,0.45) 60%, rgba(8,8,12,0.92) 78%, rgba(0,0,0,1) 88%)",
+            "radial-gradient(85% 60% at 14% 0%, rgba(255,193,171,0.65) 0%, rgba(233,109,99,0.58) 30%, rgba(48,24,28,0.0) 64%)",
+            "radial-gradient(70% 50% at 86% 22%, rgba(88,112,255,0.40) 0%, rgba(16,18,28,0.0) 55%)",
+            "linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0) 40%)",
+          ].join(","),
+          backgroundColor: "#000",
+        }}
+      />
+
+      {/* Grid overlay */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 mix-blend-screen opacity-30"
+        style={{
+          backgroundImage: [
+            "repeating-linear-gradient(90deg, rgba(255,255,255,0.09) 0 1px, transparent 1px 96px)",
+            "repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 24px)",
+            "repeating-radial-gradient(80% 55% at 50% 52%, rgba(255,255,255,0.08) 0 1px, transparent 1px 120px)"
+          ].join(","),
+          backgroundBlendMode: "screen",
+        }}
+      />
+
       {/* Header */}
       <motion.header
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="glass border-b border-white/20 dark:border-slate-700/50 p-6"
+        className="relative z-10 border-b border-white/10 backdrop-blur-sm bg-black/20 p-6"
       >
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -372,14 +401,14 @@ export default function Dashboard() {
               {/* Gemini API Key Input */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <label className="block text-sm font-medium text-white/80">
                     Gemini API Key
                   </label>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                    className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
                   >
                     <Key className="w-3 h-3" />
                     {showApiKeyInput ? 'Hide' : 'Show'}
@@ -396,15 +425,15 @@ export default function Dashboard() {
                       value={geminiApiKey}
                       onChange={(e) => setGeminiApiKey(e.target.value)}
                       placeholder="Enter your Gemini API key..."
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 mb-3"
+                      className="w-full p-3 rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-white/50 mb-3"
                     />
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-white/60">
                       Get your API key from{' '}
                       <a 
                         href="https://makersuite.google.com/app/apikey" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-blue-500 hover:text-blue-600 underline"
+                        className="text-blue-400 hover:text-blue-300 underline"
                       >
                         Google AI Studio
                       </a>
@@ -414,22 +443,22 @@ export default function Dashboard() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-white/80 mb-2">
                   Describe your website
                 </label>
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Create a modern portfolio website for a web developer with a dark theme, hero section, about me, projects gallery, and contact form..."
-                  className="w-full h-40 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
+                  className="w-full h-40 p-4 rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-white/50"
                 />
               </div>
               
               {/* Multi-page Toggle */}
-              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/20">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <FileText className="w-4 h-4 text-white/60" />
+                  <span className="text-sm font-medium text-white/80">
                     Multi-page Website
                   </span>
                 </div>
@@ -437,7 +466,7 @@ export default function Dashboard() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsMultiPage(!isMultiPage)}
                   className={`relative w-12 h-6 rounded-full transition-colors ${
-                    isMultiPage ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600'
+                    isMultiPage ? 'bg-blue-500' : 'bg-white/20'
                   }`}
                 >
                   <motion.div
@@ -470,8 +499,8 @@ export default function Dashboard() {
             </div>
 
             {/* Quick Templates */}
-            <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+            <div className="mt-6 pt-6 border-t border-white/20">
+              <h3 className="text-sm font-medium text-white/80 mb-3">
                 Quick Templates
               </h3>
               <div className="grid grid-cols-1 gap-2">
@@ -484,10 +513,10 @@ export default function Dashboard() {
                     key={index}
                     whileHover={{ scale: 1.02 }}
                     onClick={() => setPrompt(template.prompt)}
-                    className="flex items-center gap-3 p-3 rounded-lg glass hover:bg-blue-500/10 transition-all duration-300 text-left"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-blue-500/10 transition-all duration-300 text-left"
                   >
-                    <template.icon className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">
+                    <template.icon className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm text-white/80">
                       {template.label}
                     </span>
                   </motion.button>
@@ -614,7 +643,7 @@ export default function Dashboard() {
                                 className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                                   activeFile === filename
                                     ? 'bg-blue-500 text-white'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                    : 'bg-white/10 border border-white/20 text-white/80 hover:bg-white/20'
                                 }`}
                               >
                                 {filename}

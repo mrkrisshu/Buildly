@@ -6,6 +6,7 @@ import { Slot } from "@radix-ui/react-slot";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Eye, EyeOff } from "lucide-react";
+import { BuildyLogo } from "./BuildyLogo";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -409,6 +410,10 @@ export function AuthUI({ signInContent = {}, signUpContent = {}, onSignIn, onSig
         style={{ backgroundImage: `url(${currentContent.image.src})` }}
         key={currentContent.image.src}
       >
+        {/* Buildly Logo positioned at top */}
+        <div className="absolute top-8 left-8 z-20">
+          <BuildyLogo size="lg" className="drop-shadow-2xl" />
+        </div>
 
         <div className="absolute inset-x-0 bottom-0 h-[100px] bg-gradient-to-t from-background to-transparent" />
         
