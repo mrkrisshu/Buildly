@@ -21,12 +21,9 @@ import {
 } from 'lucide-react';
 import { AuthUI } from '@/components/auth-fuse';
 import { useRouter } from 'next/navigation';
-import { Web3HeroAnimated } from '@/components/animated-web3-landing-page';
-
 export default function Home() {
   const { user, signOut, loading, signIn, signUp } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
   const router = useRouter();
@@ -36,8 +33,7 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  const handleAuthClick = (mode: 'login' | 'register') => {
-    setAuthMode(mode);
+  const handleAuthClick = () => {
     setAuthModalOpen(true);
   };
 
@@ -158,7 +154,7 @@ export default function Home() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => handleAuthClick('login')}
+                        onClick={handleAuthClick}
                         className="text-white/80 hover:text-white transition-colors px-4 py-2 rounded-full"
                       >
                         Sign in
@@ -166,7 +162,7 @@ export default function Home() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => handleAuthClick('register')}
+                        onClick={handleAuthClick}
                         className="bg-white text-black px-4 py-2 rounded-full font-medium transition-all hover:bg-white/90"
                       >
                         Get Started
@@ -237,7 +233,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => handleAuthClick('register')}
+                  onClick={handleAuthClick}
                   className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-black shadow transition hover:bg-white/90"
                 >
                   Start Creating Free <ArrowRight className="ml-2 w-4 h-4" />
@@ -385,8 +381,7 @@ export default function Home() {
                 whileHover={{ y: -10, scale: 1.02 }}
                 transition={{ 
                   duration: 0.6, 
-                  delay: index * 0.1,
-                  hover: { duration: 0.3 }
+                  delay: index * 0.1
                 }}
                 viewport={{ once: true }}
                 className="group relative bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-all duration-300 overflow-hidden"
@@ -522,8 +517,7 @@ export default function Home() {
                 whileHover={{ y: -10, scale: 1.02 }}
                 transition={{ 
                   duration: 0.8, 
-                  delay: index * 0.2,
-                  hover: { duration: 0.3 }
+                  delay: index * 0.2
                 }}
                 viewport={{ once: true }}
                 className="group relative text-center bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-3xl p-8 hover:border-gray-700 transition-all duration-300"
@@ -680,8 +674,7 @@ export default function Home() {
                 whileHover={{ y: -10, scale: 1.02 }}
                 transition={{ 
                   duration: 0.6, 
-                  delay: index * 0.1,
-                  hover: { duration: 0.3 }
+                  delay: index * 0.1
                 }}
                 viewport={{ once: true }}
                 className="group relative bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-all duration-300"
@@ -764,8 +757,7 @@ export default function Home() {
                 whileHover={{ y: -5, scale: 1.02 }}
                 transition={{ 
                   duration: 0.6, 
-                  delay: index * 0.2,
-                  hover: { duration: 0.3 }
+                  delay: index * 0.2
                 }}
                 viewport={{ once: true }}
                 className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-all duration-300"
@@ -858,8 +850,7 @@ export default function Home() {
                 whileHover={{ y: -10, scale: 1.02 }}
                 transition={{ 
                   duration: 0.6, 
-                  delay: index * 0.1,
-                  hover: { duration: 0.3 }
+                  delay: index * 0.1
                 }}
                 viewport={{ once: true }}
                 className={`relative bg-gray-900/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 ${
@@ -899,7 +890,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => handleAuthClick('register')}
+                  onClick={handleAuthClick}
                   className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${
                     plan.popular
                       ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg'

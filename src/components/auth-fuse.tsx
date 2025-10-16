@@ -73,6 +73,7 @@ export function Typewriter({
     loop,
     speed,
     deleteSpeed,
+    textArray.length,
     delay,
     displayText,
     text,
@@ -312,7 +313,7 @@ interface AuthFormContainerProps {
   loading?: boolean;
 }
 
-function AuthFormContainer({ isSignIn, onToggle, onSignIn, onSignUp, onGoogleAuth, loading }: AuthFormContainerProps) {
+function AuthFormContainer({ isSignIn, onToggle, onSignIn, onSignUp, loading }: AuthFormContainerProps) {
     return (
         <div className="mx-auto grid w-[350px] gap-2">
             {isSignIn ? <SignInForm onSignIn={onSignIn} loading={loading} /> : <SignUpForm onSignUp={onSignUp} loading={loading} />}
@@ -369,7 +370,7 @@ const defaultSignUpContent = {
     }
 };
 
-export function AuthUI({ signInContent = {}, signUpContent = {}, onSignIn, onSignUp, onGoogleAuth, loading, className }: AuthUIProps) {
+export function AuthUI({ signInContent = {}, signUpContent = {}, onSignIn, onSignUp, loading }: AuthUIProps) {
   const [isSignIn, setIsSignIn] = useState(true);
   const toggleForm = () => setIsSignIn((prev) => !prev);
 
@@ -398,7 +399,7 @@ export function AuthUI({ signInContent = {}, signUpContent = {}, onSignIn, onSig
           onToggle={toggleForm} 
           onSignIn={onSignIn}
           onSignUp={onSignUp}
-          onGoogleAuth={onGoogleAuth}
+
           loading={loading}
         />
       </div>
