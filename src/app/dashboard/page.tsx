@@ -1,103 +1,105 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Wand2, 
+  Settings, 
+  Download, 
+  Copy, 
+  Check, 
+  Eye, 
+  Code, 
+  FileText, 
+  Monitor, 
+  Tablet, 
+  Smartphone,
+  LogOut,
+  Key,
+  Globe,
+  Save
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import MonacoEditor from '@monaco-editor/react';
-import { 
-  Code, 
-  Eye, 
-  Download, 
-  LogOut, 
-  User, 
-  Wand2, 
-  Loader2,
-  FileText,
-  Globe,
-  Palette,
-  Crown,
-  Key,
-  ArrowLeft,
-  Monitor,
-  Smartphone,
-  Tablet,
-  Copy,
-  Check
-} from 'lucide-react';
 import { HeroWave } from '@/components/ai-input-hero';
+import MonacoEditor from '@monaco-editor/react';
 import PricingModal from '@/components/PricingModal';
 import TemplateLibrary from '@/components/TemplateLibrary';
-import AdvancedCustomization, { CustomizationSettings } from '@/components/AdvancedCustomization';
+import AdvancedCustomization from '@/components/AdvancedCustomization';
 
 type DashboardMode = 'input' | 'generating' | 'results';
 type ViewMode = 'desktop' | 'tablet' | 'mobile';
 type ResultTab = 'preview' | 'code' | 'files';
+type Mode = 'input' | 'generating' | 'results';
+type ResultTab = 'preview' | 'code' | 'files';
+type ViewMode = 'desktop' | 'tablet' | 'mobile';
+
+interface MultiPageData {
+  pages: Record<string, string>;
+  navigation: string[];
+}
 
 export default function Dashboard() {
-  const { user, signOut, loading, isPro, updateProStatus } = useAuth();
+  const { user, signOut, isPro } = useAuth();
   const router = useRouter();
   
-  // Core state
-  const [mode, setMode] = useState<DashboardMode>('input');
-  const [generatedCode, setGeneratedCode] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
-  
-  // UI state
+  // UI State
+  const [mode, setMode] = useState<Mode>('input');
   const [activeResultTab, setActiveResultTab] = useState<ResultTab>('preview');
   const [viewMode, setViewMode] = useState<ViewMode>('desktop');
-  const [showPricingModal, setShowPricingModal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [activeFile, setActiveFile] = useState<string>('');
+  const [generationProgress, setGenerationProgress] = useState(0);
   
-  // Settings
+  // Settings State
+  const [prompt, setPrompt] = useState('');
   const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [isMultiPage, setIsMultiPage] = useState(false);
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [apiKeySaved, setApiKeySaved] = useState(false);
+  
+  // Generated Content
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [multiPageData, setMultiPageData] = useState<MultiPageData | null>(null);
+  
+  // Modal States
+  const [showPricingModal, setShowPricingModal] = useState(false);
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [showCustomization, setShowCustomization] = useState(false);
-  const [customizationSettings, setCustomizationSettings] = useState<CustomizationSettings | null>(null);
-  const [isMultiPage, setIsMultiPage] = useState(false);
-  const [multiPageData, setMultiPageData] = useState<any>(null);
-  const [activeFile, setActiveFile] = useState<string>('');
+  const [customizationSettings, setCustomizationSettings] = useState({});
 
+  // Load saved API key on component mount
   useEffect(() => {
-    // Check for payment success
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get('payment');
-    
-    if (paymentStatus === 'success') {
-      updateProStatus(true);
-      alert('🎉 Welcome to Pro! You now have unlimited access to all premium features. Enjoy creating unlimited websites with advanced customization options!');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (paymentStatus === 'cancelled') {
-      alert('Payment was cancelled. You can upgrade to Pro anytime to unlock unlimited features.');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (paymentStatus === 'demo') {
-      updateProStatus(true);
-      alert('🎉 Welcome to Pro! You now have unlimited access to all premium features. (Demo mode - Stripe not configured)');
-      window.history.replaceState({}, document.title, window.location.pathname);
+    if (typeof window !== 'undefined') {
+      const savedApiKey = localStorage.getItem('geminiApiKey');
+      if (savedApiKey) {
+        setGeminiApiKey(savedApiKey);
+        setApiKeySaved(true);
+      }
     }
-  }, [updateProStatus]);
+  }, []);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');
+  // Save API key to localStorage
+  const saveApiKey = () => {
+    if (typeof window !== 'undefined' && geminiApiKey.trim()) {
+      localStorage.setItem('geminiApiKey', geminiApiKey.trim());
+      setApiKeySaved(true);
+      setShowApiKeyInput(false);
+      setTimeout(() => setApiKeySaved(false), 3000);
     }
-  }, [user, loading, router]);
+  };
 
-  const generateWebsite = async (inputPrompt: string) => {
-    if (!inputPrompt.trim()) return;
+  const generateWebsite = async () => {
+    if (!prompt.trim()) return;
     
     if (!geminiApiKey.trim()) {
-      alert('Please enter your Gemini API key first.');
       setShowApiKeyInput(true);
       return;
     }
-    
+
     setMode('generating');
-    setIsGenerating(true);
     setGenerationProgress(0);
-    
+
     // Simulate progress
     const progressInterval = setInterval(() => {
       setGenerationProgress(prev => {
@@ -108,102 +110,85 @@ export default function Dashboard() {
         return prev + Math.random() * 15;
       });
     }, 500);
-    
+
     try {
-      let enhancedPrompt = inputPrompt;
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
-      if (customizationSettings) {
-        enhancedPrompt += `\n\nCustomization Requirements:
-        - Color Scheme: ${customizationSettings.colorScheme}
-        - Font Family: ${customizationSettings.fontFamily}
-        - Layout Style: ${customizationSettings.layoutStyle}
-        - Primary Color: ${customizationSettings.primaryColor}
-        - Secondary Color: ${customizationSettings.secondaryColor}
-        - Accent Color: ${customizationSettings.accentColor}
-        
-        Please incorporate these design preferences into the website generation.`;
+      // Mock generated content
+      const mockHtml = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Generated Website</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+            .container { max-width: 1200px; margin: 0 auto; }
+            h1 { font-size: 3rem; text-align: center; margin-bottom: 2rem; }
+            .content { background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 10px; backdrop-filter: blur(10px); }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>Your AI Generated Website</h1>
+            <div class="content">
+              <p>This is a beautiful website generated based on your prompt: "${prompt}"</p>
+              <p>The website includes modern styling, responsive design, and engaging content.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      setGeneratedCode(mockHtml);
+      
+      if (isMultiPage) {
+        setMultiPageData({
+          pages: {
+            'index.html': mockHtml,
+            'about.html': mockHtml.replace('Your AI Generated Website', 'About Us'),
+            'contact.html': mockHtml.replace('Your AI Generated Website', 'Contact Us'),
+          },
+          navigation: ['Home', 'About', 'Contact']
+        });
       }
 
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          prompt: enhancedPrompt,
-          apiKey: geminiApiKey,
-          isMultiPage: isMultiPage,
-          customizationSettings: customizationSettings
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate website');
-      }
-
-      const data = await response.json();
-      
       clearInterval(progressInterval);
       setGenerationProgress(100);
       
       setTimeout(() => {
-        if (data.isMultiPage && data.multiPageData && data.multiPageData.pages) {
-          setMultiPageData(data.multiPageData);
-          setGeneratedCode('');
-          const firstFile = Object.keys(data.multiPageData.pages)[0];
-          setActiveFile(firstFile);
-        } else {
-          setGeneratedCode(data.code);
-          setMultiPageData(null);
-          setActiveFile('');
-        }
-        
         setMode('results');
-        setActiveResultTab('preview');
-        
-        if (data.usingFallbackKey) {
-          alert(data.message || 'Generated using fallback API key');
-        }
       }, 1000);
-      
+
     } catch (error) {
-      console.error('Error generating website:', error);
-      alert('Failed to generate website. Please check your API key and try again.');
-      setMode('input');
+      console.error('Generation error:', error);
       clearInterval(progressInterval);
-    } finally {
-      setIsGenerating(false);
+      setMode('input');
     }
   };
 
   const downloadCode = () => {
     if (multiPageData) {
-      import('jszip').then(({ default: JSZip }) => {
-        const zip = new JSZip();
-        Object.entries(multiPageData.pages).forEach(([filename, content]) => {
-          zip.file(filename, content as string);
-        });
-        zip.generateAsync({ type: 'blob' }).then((content) => {
-          const url = URL.createObjectURL(content);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'multi-page-website.zip';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        });
+      // Create a zip file with multiple pages (simplified)
+      Object.keys(multiPageData.pages).forEach(filename => {
+        const element = document.createElement('a');
+        const file = new Blob([multiPageData.pages[filename]], { type: 'text/html' });
+        element.href = URL.createObjectURL(file);
+        element.download = filename;
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
       });
     } else {
-      const blob = new Blob([generatedCode], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'generated-website.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const element = document.createElement('a');
+      const file = new Blob([generatedCode], { type: 'text/html' });
+      element.href = URL.createObjectURL(file);
+      element.download = 'website.html';
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
     }
   };
 
@@ -213,196 +198,156 @@ export default function Dashboard() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('Failed to copy text: ', err);
     }
   };
 
   const getViewportDimensions = () => {
     switch (viewMode) {
-      case 'mobile': return { width: '375px', height: '667px' };
-      case 'tablet': return { width: '768px', height: '1024px' };
-      default: return { width: '100%', height: '100%' };
+      case 'mobile':
+        return { width: '375px', height: '667px' };
+      case 'tablet':
+        return { width: '768px', height: '1024px' };
+      default:
+        return { width: '1200px', height: '800px' };
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-white" />
-      </div>
-    );
-  }
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden">
       {/* Header */}
-      <motion.header 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="absolute top-0 left-0 right-0 z-50 p-6"
+      <motion.header
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="relative z-50 flex justify-between items-center p-6 bg-black/20 backdrop-blur-xl border-b border-white/20"
       >
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            {mode !== 'input' && (
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-white">Buildly Dashboard</h1>
+          {user && (
+            <span className="text-white/60 text-sm">Welcome, {user.email}</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* API Key Section */}
+          <div className="flex items-center gap-2">
+            {apiKeySaved && (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded-lg"
+              >
+                <Check className="w-4 h-4 text-green-400" />
+                <span className="text-green-400 text-sm">API Key Saved</span>
+              </motion.div>
+            )}
+            
+            {showApiKeyInput ? (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 'auto', opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  type="password"
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  placeholder="Enter Gemini API Key"
+                  className="px-3 py-2 bg-black/50 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500 w-64"
+                />
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  onClick={saveApiKey}
+                  className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  onClick={() => setShowApiKeyInput(false)}
+                  className="p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
+                  ×
+                </motion.button>
+              </motion.div>
+            ) : (
               <motion.button
                 whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setMode('input')}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 text-white hover:bg-white/20 transition-all"
+                onClick={() => setShowApiKeyInput(true)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  geminiApiKey 
+                    ? 'bg-green-500/20 border border-green-500/30 text-green-400' 
+                    : 'bg-orange-500/20 border border-orange-500/30 text-orange-400'
+                }`}
               >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Input
+                <Key className="w-4 h-4" />
+                <span className="text-sm">
+                  {geminiApiKey ? 'API Key Set' : 'Set API Key'}
+                </span>
               </motion.button>
             )}
-            <h1 className="text-2xl font-bold text-white">
-              AI Website Generator
-            </h1>
           </div>
-          
-          <div className="flex items-center gap-4">
-            {isPro && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-black text-sm font-medium">
-                <Crown className="w-4 h-4" />
-                Pro
-              </div>
-            )}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={signOut}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500/20 backdrop-blur-sm rounded-xl border border-red-500/30 text-red-300 hover:bg-red-500/30 transition-all"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </motion.button>
-          </div>
+
+          {/* Multi-page Toggle */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            onClick={() => setIsMultiPage(!isMultiPage)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              isMultiPage 
+                ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400' 
+                : 'bg-white/10 border border-white/20 text-white/60 hover:text-white'
+            }`}
+          >
+            <Globe className="w-4 h-4" />
+            <span className="text-sm">Multi-page Website</span>
+          </motion.button>
+
+          {/* Settings */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            onClick={() => setShowCustomization(true)}
+            className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+          >
+            <Settings className="w-5 h-5" />
+          </motion.button>
+
+          {/* Sign Out */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            onClick={handleSignOut}
+            className="p-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
+          >
+            <LogOut className="w-5 h-5" />
+          </motion.button>
         </div>
       </motion.header>
 
+      {/* Main Content */}
       <AnimatePresence mode="wait">
-        {/* Input Mode - Full Screen HeroWave */}
+        {/* Input Mode */}
         {mode === 'input' && (
           <motion.div
             key="input"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0"
+            className="absolute inset-0 pt-20"
           >
-            <div className="h-full flex flex-col">
-              {/* Full Screen HeroWave */}
-              <div className="flex-1 relative">
-                <HeroWave
-                  className="w-full h-full"
-                  style={{ minHeight: '100vh' }}
-                  title="AI Website Generator"
-                  subtitle="Describe your vision and watch it come to life"
-                  placeholder="Create a modern portfolio website for a web developer..."
-                  buttonText={isGenerating ? "Generating..." : "Generate Website"}
-                  onPromptSubmit={(value) => {
-                    generateWebsite(value);
-                  }}
+            <div className="h-full flex items-center justify-center">
+              <div className="w-full max-w-4xl mx-auto px-6">
+                <HeroWave 
+                  onGenerate={generateWebsite}
+                  prompt={prompt}
+                  setPrompt={setPrompt}
+                  className="w-full"
                 />
-                
-                {/* Settings Panel */}
-                <motion.div
-                  initial={{ x: -400 }}
-                  animate={{ x: 0 }}
-                  className="absolute left-6 top-1/2 -translate-y-1/2 w-80 bg-black/20 backdrop-blur-xl rounded-2xl border border-white/20 p-6 space-y-6"
-                >
-                  {/* API Key Input */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium text-white/80">
-                        Gemini API Key
-                      </label>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                      >
-                        <Key className="w-3 h-3" />
-                        {showApiKeyInput ? 'Hide' : 'Show'}
-                      </motion.button>
-                    </div>
-                    {showApiKeyInput && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-                        <input
-                          type="password"
-                          value={geminiApiKey}
-                          onChange={(e) => setGeminiApiKey(e.target.value)}
-                          placeholder="Enter your Gemini API key..."
-                          className="w-full p-3 rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-white/50 mb-3"
-                        />
-                        <p className="text-xs text-white/60">
-                          Get your API key from{' '}
-                          <a 
-                            href="https://makersuite.google.com/app/apikey" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 underline"
-                          >
-                            Google AI Studio
-                          </a>
-                        </p>
-                      </motion.div>
-                    )}
-                  </div>
-                  
-                  {/* Multi-page Toggle */}
-                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/20">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-white/60" />
-                      <span className="text-sm font-medium text-white/80">
-                        Multi-page Website
-                      </span>
-                    </div>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setIsMultiPage(!isMultiPage)}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${
-                        isMultiPage ? 'bg-blue-500' : 'bg-white/20'
-                      }`}
-                    >
-                      <motion.div
-                        animate={{ x: isMultiPage ? 24 : 2 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
-                      />
-                    </motion.button>
-                  </div>
-
-                  {/* Quick Templates */}
-                  <div>
-                    <h3 className="text-sm font-medium text-white/80 mb-3">
-                      Quick Templates
-                    </h3>
-                    <div className="space-y-2">
-                      {[
-                        { icon: Globe, label: 'Business Landing', prompt: 'Create a professional business landing page with hero section, services, testimonials, and contact form' },
-                        { icon: User, label: 'Portfolio Site', prompt: 'Build a creative portfolio website for a designer with project gallery, about section, and contact page' },
-                        { icon: Palette, label: 'Creative Agency', prompt: 'Design a modern creative agency website with bold visuals, team section, and project showcase' }
-                      ].map((template, index) => (
-                        <motion.button
-                          key={index}
-                          whileHover={{ scale: 1.02 }}
-                          onClick={() => generateWebsite(template.prompt)}
-                          className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-blue-500/10 transition-all duration-300 text-left w-full"
-                        >
-                          <template.icon className="w-4 h-4 text-blue-400" />
-                          <span className="text-sm text-white/80">
-                            {template.label}
-                          </span>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
               </div>
             </div>
           </motion.div>

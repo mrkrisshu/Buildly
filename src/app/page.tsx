@@ -1012,6 +1012,7 @@ export default function Home() {
                     console.error('Sign in error:', error.message);
                   } else {
                     setAuthModalOpen(false);
+                    setShowPostLoginSelection(true);
                   }
                 } catch (error) {
                   console.error('Sign in error:', error);
@@ -1024,6 +1025,7 @@ export default function Home() {
                     console.error('Sign up error:', error.message);
                   } else {
                     setAuthModalOpen(false);
+                    setShowPostLoginSelection(true);
                   }
                 } catch (error) {
                   console.error('Sign up error:', error);
@@ -1034,6 +1036,7 @@ export default function Home() {
                   // Handle Google auth here - placeholder for now
                   console.log('Google auth not implemented yet');
                   setAuthModalOpen(false);
+                  setShowPostLoginSelection(true);
                 } catch (error) {
                   console.error('Google auth error:', error);
                 }
@@ -1045,6 +1048,15 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Post-Login Selection Modal */}
+      <AnimatePresence>
+        {showPostLoginSelection && (
+          <PostLoginSelection 
+            onClose={() => setShowPostLoginSelection(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
