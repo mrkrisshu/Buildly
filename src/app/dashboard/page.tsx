@@ -19,22 +19,42 @@ import {
   Crown,
   Key,
   Layout,
-  Presentation
+  Presentation,
+  ArrowLeft,
+  Monitor,
+  Smartphone,
+  Tablet,
+  ExternalLink,
+  Copy,
+  Check
 } from 'lucide-react';
 import { HeroWave } from '@/components/ai-input-hero';
 import PricingModal from '@/components/PricingModal';
 import TemplateLibrary from '@/components/TemplateLibrary';
 import AdvancedCustomization, { CustomizationSettings } from '@/components/AdvancedCustomization';
 
+type DashboardMode = 'input' | 'generating' | 'results';
+type ViewMode = 'desktop' | 'tablet' | 'mobile';
+type ResultTab = 'preview' | 'code' | 'files';
+
 export default function Dashboard() {
   const { user, signOut, loading, isPro, updateProStatus } = useAuth();
   const router = useRouter();
+  
+  // Core state
+  const [mode, setMode] = useState<DashboardMode>('input');
   const [prompt, setPrompt] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'prompt' | 'code' | 'preview'>('prompt');
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  
+  // UI state
+  const [activeResultTab, setActiveResultTab] = useState<ResultTab>('preview');
+  const [viewMode, setViewMode] = useState<ViewMode>('desktop');
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+  
+  // Settings
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
@@ -45,41 +65,22 @@ export default function Dashboard() {
   const [activeFile, setActiveFile] = useState<string>('');
 
   useEffect(() => {
-    // Check for dark mode
-    const checkDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
-    };
-    
-    checkDarkMode();
-    
-    // Listen for theme changes
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-
     // Check for payment success
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
     
     if (paymentStatus === 'success') {
-      // Show pro member welcome message and update status
       updateProStatus(true);
       alert('🎉 Welcome to Pro! You now have unlimited access to all premium features. Enjoy creating unlimited websites with advanced customization options!');
-      // Clear the URL parameter
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (paymentStatus === 'cancelled') {
       alert('Payment was cancelled. You can upgrade to Pro anytime to unlock unlimited features.');
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (paymentStatus === 'demo') {
-      // Show pro member welcome message and update status for demo
       updateProStatus(true);
       alert('🎉 Welcome to Pro! You now have unlimited access to all premium features. (Demo mode - Stripe not configured)');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-
-    return () => observer.disconnect();
   }, [updateProStatus]);
 
   useEffect(() => {
@@ -88,8 +89,8 @@ export default function Dashboard() {
     }
   }, [user, loading, router]);
 
-  const generateWebsite = async () => {
-    if (!prompt.trim()) return;
+  const generateWebsite = async (inputPrompt: string) => {
+    if (!inputPrompt.trim()) return;
     
     if (!geminiApiKey.trim()) {
       alert('Please enter your Gemini API key first.');
@@ -97,11 +98,24 @@ export default function Dashboard() {
       return;
     }
     
+    setMode('generating');
     setIsGenerating(true);
+    setGenerationProgress(0);
+    
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setGenerationProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + Math.random() * 15;
+      });
+    }, 500);
+    
     try {
-      let enhancedPrompt = prompt;
+      let enhancedPrompt = inputPrompt;
       
-      // Apply customization settings to the prompt
       if (customizationSettings) {
         enhancedPrompt += `\n\nCustomization Requirements:
         - Color Scheme: ${customizationSettings.colorScheme}
@@ -133,27 +147,34 @@ export default function Dashboard() {
 
       const data = await response.json();
       
-      if (data.isMultiPage && data.multiPageData && data.multiPageData.pages) {
-        setMultiPageData(data.multiPageData);
-        setGeneratedCode(''); // Clear single page code
-        // Set the first file as active
-        const firstFile = Object.keys(data.multiPageData.pages)[0];
-        setActiveFile(firstFile);
-      } else {
-        setGeneratedCode(data.code);
-        setMultiPageData(null); // Clear multi-page data
-        setActiveFile(''); // Clear active file
-      }
+      clearInterval(progressInterval);
+      setGenerationProgress(100);
       
-      setActiveTab('code');
+      setTimeout(() => {
+        if (data.isMultiPage && data.multiPageData && data.multiPageData.pages) {
+          setMultiPageData(data.multiPageData);
+          setGeneratedCode('');
+          const firstFile = Object.keys(data.multiPageData.pages)[0];
+          setActiveFile(firstFile);
+        } else {
+          setGeneratedCode(data.code);
+          setMultiPageData(null);
+          setActiveFile('');
+        }
+        
+        setMode('results');
+        setActiveResultTab('preview');
+        
+        if (data.usingFallbackKey) {
+          alert(data.message || 'Generated using fallback API key');
+        }
+      }, 1000);
       
-      // Show message if fallback key was used
-      if (data.usingFallbackKey) {
-        alert(data.message || 'Generated using fallback API key');
-      }
     } catch (error) {
       console.error('Error generating website:', error);
       alert('Failed to generate website. Please check your API key and try again.');
+      setMode('input');
+      clearInterval(progressInterval);
     } finally {
       setIsGenerating(false);
     }
@@ -161,16 +182,11 @@ export default function Dashboard() {
 
   const downloadCode = () => {
     if (multiPageData) {
-      // Create ZIP file for multi-page websites
       import('jszip').then(({ default: JSZip }) => {
         const zip = new JSZip();
-        
-        // Add all files to the ZIP
         Object.entries(multiPageData.pages).forEach(([filename, content]) => {
           zip.file(filename, content as string);
         });
-        
-        // Generate and download ZIP
         zip.generateAsync({ type: 'blob' }).then((content) => {
           const url = URL.createObjectURL(content);
           const a = document.createElement('a');
@@ -183,7 +199,6 @@ export default function Dashboard() {
         });
       });
     } else {
-      // Single HTML file download
       const blob = new Blob([generatedCode], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -196,631 +211,473 @@ export default function Dashboard() {
     }
   };
 
-  const deployToVercel = () => {
-    if (multiPageData) {
-      // For multi-page, create a GitHub repository and deploy
-      alert('Multi-page deployment: Please download the ZIP file and upload it to a GitHub repository, then connect it to Vercel for deployment.');
-    } else {
-      // For single page, use Vercel's direct deployment
-      const encodedHtml = encodeURIComponent(generatedCode);
-      const vercelUrl = `https://vercel.com/new/clone?repository-url=data:text/html,${encodedHtml}`;
-      window.open(vercelUrl, '_blank');
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
     }
   };
 
-  const deployToNetlify = () => {
-    if (multiPageData) {
-      // For multi-page, create a ZIP and use Netlify Drop
-      import('jszip').then(({ default: JSZip }) => {
-        const zip = new JSZip();
-        
-        // Add all files to the ZIP
-        Object.entries(multiPageData.pages).forEach(([filename, content]) => {
-          zip.file(filename, content as string);
-        });
-        
-        // Generate ZIP and open Netlify Drop
-        zip.generateAsync({ type: 'blob' }).then((content) => {
-          const url = URL.createObjectURL(content);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'netlify-deploy.zip';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          
-          // Open Netlify Drop
-          setTimeout(() => {
-            window.open('https://app.netlify.com/drop', '_blank');
-            alert('ZIP file downloaded! Drag and drop it to the Netlify Drop page that just opened.');
-          }, 1000);
-        });
-      });
-    } else {
-      // For single page, create a simple deployment
-      const blob = new Blob([generatedCode], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'index.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      // Open Netlify Drop
-      setTimeout(() => {
-        window.open('https://app.netlify.com/drop', '_blank');
-        alert('HTML file downloaded! Drag and drop it to the Netlify Drop page that just opened.');
-      }, 1000);
+  const getViewportDimensions = () => {
+    switch (viewMode) {
+      case 'mobile': return { width: '375px', height: '667px' };
+      case 'tablet': return { width: '768px', height: '1024px' };
+      default: return { width: '100%', height: '100%' };
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      {/* Web3 Background */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-30"
-        style={{
-          backgroundImage: [
-            "radial-gradient(80% 55% at 50% 52%, rgba(252,166,154,0.45) 0%, rgba(214,76,82,0.46) 27%, rgba(61,36,47,0.38) 47%, rgba(39,38,67,0.45) 60%, rgba(8,8,12,0.92) 78%, rgba(0,0,0,1) 88%)",
-            "radial-gradient(85% 60% at 14% 0%, rgba(255,193,171,0.65) 0%, rgba(233,109,99,0.58) 30%, rgba(48,24,28,0.0) 64%)",
-            "radial-gradient(70% 50% at 86% 22%, rgba(88,112,255,0.40) 0%, rgba(16,18,28,0.0) 55%)",
-            "linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0) 40%)",
-          ].join(","),
-          backgroundColor: "#000",
-        }}
-      />
-
-      {/* Grid overlay */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 mix-blend-screen opacity-30"
-        style={{
-          backgroundImage: [
-            "repeating-linear-gradient(90deg, rgba(255,255,255,0.09) 0 1px, transparent 1px 96px)",
-            "repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 24px)",
-            "repeating-radial-gradient(80% 55% at 50% 52%, rgba(255,255,255,0.08) 0 1px, transparent 1px 120px)"
-          ].join(","),
-          backgroundBlendMode: "screen",
-        }}
-      />
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Header */}
-      <motion.header
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="relative z-10 border-b border-white/10 backdrop-blur-sm bg-black/20 p-6"
+      <motion.header 
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className="absolute top-0 left-0 right-0 z-50 p-6"
       >
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="text-3xl font-bold gradient-text"
-            >
-              Buildly
-            </motion.div>
-            <div className="text-slate-600 dark:text-slate-400">Dashboard</div>
+            {mode !== 'input' && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setMode('input')}
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 text-white hover:bg-white/20 transition-all"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Input
+              </motion.button>
+            )}
+            <h1 className="text-2xl font-bold text-white">
+              AI Website Generator
+            </h1>
           </div>
           
           <div className="flex items-center gap-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowTemplateLibrary(true)}
-              className="glass px-4 py-2 rounded-full flex items-center gap-2 hover:bg-blue-500/20 transition-all duration-300"
-            >
-              <Layout className="w-4 h-4 text-blue-500" />
-              <span className="text-sm font-medium">Templates</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.push('/ppt-generator')}
-              className="glass px-4 py-2 rounded-full flex items-center gap-2 hover:bg-green-500/20 transition-all duration-300"
-            >
-              <Presentation className="w-4 h-4 text-green-500" />
-              <span className="text-sm font-medium">PPT Generator</span>
-            </motion.button>
             {isPro && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowCustomization(true)}
-                className="glass px-4 py-2 rounded-full flex items-center gap-2 hover:bg-purple-500/20 transition-all duration-300"
-              >
-                <Palette className="w-4 h-4 text-purple-500" />
-                <span className="text-sm font-medium">Customize</span>
-              </motion.button>
-            )}
-            {!isPro ? (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowPricingModal(true)}
-                className="glass px-4 py-2 rounded-full flex items-center gap-2 hover:bg-gradient-to-r hover:from-purple-500/20 hover:to-pink-500/20 transition-all duration-300"
-              >
-                <Crown className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium">Upgrade</span>
-              </motion.button>
-            ) : (
-              <div className="glass px-4 py-2 rounded-full flex items-center gap-2 bg-gradient-to-r from-yellow-400/20 to-yellow-600/20">
-                <Crown className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium">Pro</span>
+              <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-black text-sm font-medium">
+                <Crown className="w-4 h-4" />
+                Pro
               </div>
             )}
-            <div className="glass px-4 py-2 rounded-full flex items-center gap-2">
-              <User className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {user.user_metadata?.full_name || user.email}
-              </span>
-            </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={signOut}
-              className="glass p-3 rounded-full hover:bg-red-500/10 transition-all duration-300"
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/20 backdrop-blur-sm rounded-xl border border-red-500/30 text-red-300 hover:bg-red-500/30 transition-all"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
+              Sign Out
             </motion.button>
           </div>
         </div>
       </motion.header>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-140px)]">
-          {/* Left Panel - Prompt Input */}
+      <AnimatePresence mode="wait">
+        {/* Input Mode - Full Screen HeroWave */}
+        {mode === 'input' && (
           <motion.div
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="glass-card p-6 flex flex-col"
+            key="input"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0"
           >
-            <div className="flex items-center gap-3 mb-6">
-              <Wand2 className="w-6 h-6 text-purple-500" />
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                AI Website Generator
-              </h2>
-            </div>
-            
-            <div className="flex-1 flex flex-col gap-4">
-              {/* AI Input Hero Component */}
-              <div className="mb-4">
+            <div className="h-full flex flex-col">
+              {/* Full Screen HeroWave */}
+              <div className="flex-1 relative">
                 <HeroWave
+                  className="w-full h-full"
+                  style={{ minHeight: '100vh' }}
                   title="AI Website Generator"
                   subtitle="Describe your vision and watch it come to life"
                   placeholder="Create a modern portfolio website for a web developer..."
                   buttonText={isGenerating ? "Generating..." : "Generate Website"}
                   onPromptSubmit={(value) => {
                     setPrompt(value);
-                    if (value.trim() && geminiApiKey.trim()) {
-                      generateWebsite();
-                    } else if (!geminiApiKey.trim()) {
-                      alert('Please enter your Gemini API key first.');
-                      setShowApiKeyInput(true);
-                    }
+                    generateWebsite(value);
                   }}
                 />
-              </div>
-
-              {/* Gemini API Key Input */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-white/80">
-                    Gemini API Key
-                  </label>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                  >
-                    <Key className="w-3 h-3" />
-                    {showApiKeyInput ? 'Hide' : 'Show'}
-                  </motion.button>
-                </div>
-                {showApiKeyInput && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                  >
-                    <input
-                      type="password"
-                      value={geminiApiKey}
-                      onChange={(e) => setGeminiApiKey(e.target.value)}
-                      placeholder="Enter your Gemini API key..."
-                      className="w-full p-3 rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-white/50 mb-3"
-                    />
-                    <p className="text-xs text-white/60">
-                      Get your API key from{' '}
-                      <a 
-                        href="https://makersuite.google.com/app/apikey" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 underline"
-                      >
-                        Google AI Studio
-                      </a>
-                    </p>
-                  </motion.div>
-                )}
-              </div>
-              
-              {/* Multi-page Toggle */}
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/20">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-white/60" />
-                  <span className="text-sm font-medium text-white/80">
-                    Multi-page Website
-                  </span>
-                </div>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsMultiPage(!isMultiPage)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
-                    isMultiPage ? 'bg-blue-500' : 'bg-white/20'
-                  }`}
+                
+                {/* Settings Panel */}
+                <motion.div
+                  initial={{ x: -400 }}
+                  animate={{ x: 0 }}
+                  className="absolute left-6 top-1/2 -translate-y-1/2 w-80 bg-black/20 backdrop-blur-xl rounded-2xl border border-white/20 p-6 space-y-6"
                 >
-                  <motion.div
-                    animate={{ x: isMultiPage ? 24 : 2 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
-                  />
-                </motion.button>
-              </div>
-            </div>
+                  {/* API Key Input */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-white/80">
+                        Gemini API Key
+                      </label>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                      >
+                        <Key className="w-3 h-3" />
+                        {showApiKeyInput ? 'Hide' : 'Show'}
+                      </motion.button>
+                    </div>
+                    {showApiKeyInput && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                      >
+                        <input
+                          type="password"
+                          value={geminiApiKey}
+                          onChange={(e) => setGeminiApiKey(e.target.value)}
+                          placeholder="Enter your Gemini API key..."
+                          className="w-full p-3 rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-white/50 mb-3"
+                        />
+                        <p className="text-xs text-white/60">
+                          Get your API key from{' '}
+                          <a 
+                            href="https://makersuite.google.com/app/apikey" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 underline"
+                          >
+                            Google AI Studio
+                          </a>
+                        </p>
+                      </motion.div>
+                    )}
+                  </div>
+                  
+                  {/* Multi-page Toggle */}
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/20">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-white/60" />
+                      <span className="text-sm font-medium text-white/80">
+                        Multi-page Website
+                      </span>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setIsMultiPage(!isMultiPage)}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${
+                        isMultiPage ? 'bg-blue-500' : 'bg-white/20'
+                      }`}
+                    >
+                      <motion.div
+                        animate={{ x: isMultiPage ? 24 : 2 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                      />
+                    </motion.button>
+                  </div>
 
-            {/* Quick Templates */}
-            <div className="mt-6 pt-6 border-t border-white/20">
-              <h3 className="text-sm font-medium text-white/80 mb-3">
-                Quick Templates
-              </h3>
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  { icon: Globe, label: 'Business Landing', prompt: 'Create a professional business landing page with hero section, services, testimonials, and contact form' },
-                  { icon: User, label: 'Portfolio Site', prompt: 'Build a creative portfolio website for a designer with project gallery, about section, and contact page' },
-                  { icon: Palette, label: 'Creative Agency', prompt: 'Design a modern creative agency website with bold visuals, team section, and project showcase' }
-                ].map((template, index) => (
-                  <motion.button
-                    key={index}
-                    whileHover={{ scale: 1.02 }}
-                    onClick={() => setPrompt(template.prompt)}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-blue-500/10 transition-all duration-300 text-left"
-                  >
-                    <template.icon className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm text-white/80">
-                      {template.label}
-                    </span>
-                  </motion.button>
-                ))}
+                  {/* Quick Templates */}
+                  <div>
+                    <h3 className="text-sm font-medium text-white/80 mb-3">
+                      Quick Templates
+                    </h3>
+                    <div className="space-y-2">
+                      {[
+                        { icon: Globe, label: 'Business Landing', prompt: 'Create a professional business landing page with hero section, services, testimonials, and contact form' },
+                        { icon: User, label: 'Portfolio Site', prompt: 'Build a creative portfolio website for a designer with project gallery, about section, and contact page' },
+                        { icon: Palette, label: 'Creative Agency', prompt: 'Design a modern creative agency website with bold visuals, team section, and project showcase' }
+                      ].map((template, index) => (
+                        <motion.button
+                          key={index}
+                          whileHover={{ scale: 1.02 }}
+                          onClick={() => generateWebsite(template.prompt)}
+                          className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-blue-500/10 transition-all duration-300 text-left w-full"
+                        >
+                          <template.icon className="w-4 h-4 text-blue-400" />
+                          <span className="text-sm text-white/80">
+                            {template.label}
+                          </span>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </motion.div>
+        )}
 
-          {/* Middle Panel - Tabs */}
+        {/* Generating Mode */}
+        {mode === 'generating' && (
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="lg:col-span-2 glass-card flex flex-col"
+            key="generating"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center"
           >
-            {/* Tab Navigation */}
-            <div className="flex border-b border-slate-200 dark:border-slate-700">
-              {[
-                
-                { id: 'code', label: 'Generated Code', icon: Code },
-                { id: 'preview', label: 'Live Preview', icon: Eye }
-              ].map((tab) => (
-                <motion.button
-                  key={tab.id}
-                  whileHover={{ scale: 1.02 }}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-6 py-4 font-medium transition-all duration-300 ${
-                    activeTab === tab.id
-                      ? 'text-blue-500 border-b-2 border-blue-500 bg-blue-500/5'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  {tab.label}
-                </motion.button>
-              ))}
+            <div className="text-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="w-16 h-16 mx-auto mb-6"
+              >
+                <Wand2 className="w-full h-full text-blue-400" />
+              </motion.div>
+              <h2 className="text-3xl font-bold text-white mb-4">
+                Generating Your Website
+              </h2>
+              <p className="text-white/60 mb-8 max-w-md">
+                Our AI is crafting your perfect website based on your description...
+              </p>
+              
+              {/* Progress Bar */}
+              <div className="w-80 mx-auto">
+                <div className="flex justify-between text-sm text-white/60 mb-2">
+                  <span>Progress</span>
+                  <span>{Math.round(generationProgress)}%</span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${generationProgress}%` }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                  />
+                </div>
+              </div>
             </div>
+          </motion.div>
+        )}
 
-            {/* Tab Content */}
-            <div className="flex-1 p-6">
-              {activeTab === 'prompt' && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="h-full flex items-center justify-center text-center"
-                >
-                  <div>
-                    <Wand2 className="w-16 h-16 mx-auto text-slate-400 mb-4" />
-                    <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                      Ready to Create?
-                    </h3>
-                    <p className="text-slate-500 dark:text-slate-400">
-                      Enter your website description and click "Generate Website" to get started.
-                    </p>
-                  </div>
-                </motion.div>
-              )}
+        {/* Results Mode */}
+        {mode === 'results' && (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 pt-20"
+          >
+            <div className="h-full flex flex-col">
+              {/* Tab Navigation */}
+              <div className="flex justify-center mb-6">
+                <div className="flex bg-black/20 backdrop-blur-xl rounded-2xl border border-white/20 p-1">
+                  {[
+                    { id: 'preview', label: 'Live Preview', icon: Eye },
+                    { id: 'code', label: 'Generated Code', icon: Code },
+                    { id: 'files', label: 'Files', icon: FileText }
+                  ].map((tab) => (
+                    <motion.button
+                      key={tab.id}
+                      whileHover={{ scale: 1.02 }}
+                      onClick={() => setActiveResultTab(tab.id as ResultTab)}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                        activeResultTab === tab.id
+                          ? 'bg-blue-500 text-white shadow-lg'
+                          : 'text-white/60 hover:text-white/80'
+                      }`}
+                    >
+                      <tab.icon className="w-4 h-4" />
+                      {tab.label}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
 
-              {activeTab === 'code' && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="h-full flex flex-col"
-                >
-                  {generatedCode || multiPageData ? (
-                    <>
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                          {multiPageData ? 'Multi-page Website Files' : 'Generated HTML Code'}
-                        </h3>
-                        <div className="flex gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setGeneratedCode(generatedCode)}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                          >
-                            <Code className="w-4 h-4" />
-                            Apply Changes
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={downloadCode}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                          >
-                            <Download className="w-4 h-4" />
-                            Download {multiPageData ? 'ZIP' : 'HTML'}
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => deployToVercel()}
-                            className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
-                          >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 2L2 19.777h20L12 2z"/>
-                            </svg>
-                            Deploy to Vercel
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => deployToNetlify()}
-                            className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
-                          >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.042-3.441.219-.937 1.404-5.965 1.404-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.888-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.357-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24c6.624 0 11.99-5.367 11.99-11.987C24.007 5.367 18.641.001.017 0z"/>
-                            </svg>
-                            Deploy to Netlify
-                          </motion.button>
-                        </div>
-                      </div>
-                      
-                      {multiPageData ? (
-                        <div className="flex-1 flex flex-col">
-                          {/* File tabs for multi-page */}
-                          <div className="flex gap-1 mb-4 overflow-x-auto">
-                            {Object.keys(multiPageData.pages).map((filename) => (
+              {/* Content Area */}
+              <div className="flex-1 px-6 pb-6">
+                <AnimatePresence mode="wait">
+                  {/* Preview Tab */}
+                  {activeResultTab === 'preview' && (
+                    <motion.div
+                      key="preview"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="h-full"
+                    >
+                      <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/20 h-full flex flex-col">
+                        {/* Preview Controls */}
+                        <div className="flex justify-between items-center p-4 border-b border-white/20">
+                          <div className="flex items-center gap-2">
+                            {[
+                              { mode: 'desktop', icon: Monitor, label: 'Desktop' },
+                              { mode: 'tablet', icon: Tablet, label: 'Tablet' },
+                              { mode: 'mobile', icon: Smartphone, label: 'Mobile' }
+                            ].map((device) => (
                               <motion.button
-                                key={filename}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setActiveFile(filename)}
-                                className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                                  activeFile === filename
+                                key={device.mode}
+                                whileHover={{ scale: 1.05 }}
+                                onClick={() => setViewMode(device.mode as ViewMode)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+                                  viewMode === device.mode
                                     ? 'bg-blue-500 text-white'
-                                    : 'bg-white/10 border border-white/20 text-white/80 hover:bg-white/20'
+                                    : 'text-white/60 hover:text-white/80 hover:bg-white/10'
                                 }`}
                               >
-                                {filename}
+                                <device.icon className="w-4 h-4" />
+                                <span className="text-sm">{device.label}</span>
                               </motion.button>
                             ))}
                           </div>
                           
-                          {/* Code editor for selected file */}
-                          <div className="flex-1 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                            <MonacoEditor
-                              height="100%"
-                              defaultLanguage={activeFile?.endsWith('.css') ? 'css' : activeFile?.endsWith('.js') ? 'javascript' : 'html'}
-                              value={multiPageData.pages[activeFile] || ''}
-                              onChange={(value) => {
-                                if (multiPageData && activeFile) {
-                                  setMultiPageData({
-                                    ...multiPageData,
-                                    pages: {
-                                      ...multiPageData.pages,
-                                      [activeFile]: value || ''
-                                    }
-                                  });
-                                }
-                              }}
-                              theme={isDarkMode ? 'vs-dark' : 'light'}
-                              options={{
-                                minimap: { enabled: false },
-                                fontSize: 14,
-                                lineNumbers: 'on',
-                                roundedSelection: false,
-                                scrollBeyondLastLine: false,
-                                automaticLayout: true,
-                                wordWrap: 'on',
-                                folding: true,
-                                lineDecorationsWidth: 10,
-                                lineNumbersMinChars: 3,
-                                glyphMargin: false,
-                                contextmenu: true,
-                                selectOnLineNumbers: true,
-                                matchBrackets: 'always',
-                                autoIndent: 'full',
-                                formatOnPaste: true,
-                                formatOnType: true
-                              }}
-                            />
+                          <div className="flex items-center gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              onClick={downloadCode}
+                              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download
+                            </motion.button>
                           </div>
                         </div>
-                      ) : (
-                        <div className="flex-1 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                        
+                        {/* Preview Frame */}
+                        <div className="flex-1 p-4 flex items-center justify-center">
+                          <motion.div
+                            animate={getViewportDimensions()}
+                            transition={{ duration: 0.3 }}
+                            className="bg-white rounded-lg shadow-2xl overflow-hidden"
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: '100%',
+                              aspectRatio: viewMode === 'mobile' ? '9/16' : viewMode === 'tablet' ? '3/4' : 'auto'
+                            }}
+                          >
+                            <iframe
+                              srcDoc={generatedCode}
+                              className="w-full h-full border-0"
+                              title="Website Preview"
+                            />
+                          </motion.div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Code Tab */}
+                  {activeResultTab === 'code' && (
+                    <motion.div
+                      key="code"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="h-full"
+                    >
+                      <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/20 h-full flex flex-col">
+                        {/* Code Controls */}
+                        <div className="flex justify-between items-center p-4 border-b border-white/20">
+                          <h3 className="text-lg font-semibold text-white">
+                            Generated Code
+                          </h3>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            onClick={copyToClipboard}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                          >
+                            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            {copied ? 'Copied!' : 'Copy Code'}
+                          </motion.button>
+                        </div>
+                        
+                        {/* Code Editor */}
+                        <div className="flex-1">
                           <MonacoEditor
                             height="100%"
-                            defaultLanguage="html"
+                            language="html"
                             value={generatedCode}
                             onChange={(value) => setGeneratedCode(value || '')}
-                            theme={isDarkMode ? 'vs-dark' : 'light'}
+                            theme="vs-dark"
                             options={{
                               minimap: { enabled: false },
                               fontSize: 14,
-                              lineNumbers: 'on',
-                              roundedSelection: false,
-                              scrollBeyondLastLine: false,
-                              automaticLayout: true,
                               wordWrap: 'on',
-                              folding: true,
-                              lineDecorationsWidth: 10,
-                              lineNumbersMinChars: 3,
-                              glyphMargin: false,
-                              contextmenu: true,
-                              selectOnLineNumbers: true,
-                              matchBrackets: 'always',
-                              autoIndent: 'full',
-                              formatOnPaste: true,
-                              formatOnType: true
+                              automaticLayout: true,
                             }}
                           />
                         </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-center">
-                      <div>
-                        <Code className="w-16 h-16 mx-auto text-slate-400 mb-4" />
-                        <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                          No Code Generated Yet
-                        </h3>
-                        <p className="text-slate-500 dark:text-slate-400">
-                          Generate a website first to see the code here.
-                        </p>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
-                </motion.div>
-              )}
 
-              {activeTab === 'preview' && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="h-full flex flex-col"
-                >
-                  {generatedCode || multiPageData ? (
-                    <div className="flex-1 bg-white rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-                      {multiPageData ? (
-                        <div className="h-full flex flex-col">
-                          {/* Page selector for multi-page preview */}
-                          <div className="flex gap-1 p-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                            {Object.keys(multiPageData.pages).filter(filename => filename.endsWith('.html')).map((filename) => (
-                              <motion.button
+                  {/* Files Tab */}
+                  {activeResultTab === 'files' && (
+                    <motion.div
+                      key="files"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="h-full"
+                    >
+                      <div className="bg-black/20 backdrop-blur-xl rounded-2xl border border-white/20 h-full p-6">
+                        <h3 className="text-lg font-semibold text-white mb-4">
+                          Project Files
+                        </h3>
+                        {multiPageData ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {Object.keys(multiPageData.pages).map((filename) => (
+                              <motion.div
                                 key={filename}
                                 whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
+                                className="p-4 bg-white/5 rounded-lg border border-white/20 cursor-pointer hover:bg-white/10 transition-all"
                                 onClick={() => setActiveFile(filename)}
-                                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                                  activeFile === filename
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'
-                                }`}
                               >
-                                {filename.replace('.html', '')}
-                              </motion.button>
+                                <div className="flex items-center gap-3">
+                                  <FileText className="w-5 h-5 text-blue-400" />
+                                  <span className="text-white font-medium">{filename}</span>
+                                </div>
+                              </motion.div>
                             ))}
                           </div>
-                          
-                          {/* Preview iframe */}
-                          <div className="flex-1">
-                            <iframe
-                              srcDoc={multiPageData.pages[activeFile] || multiPageData.pages['index.html'] || Object.values(multiPageData.pages)[0]}
-                              className="w-full h-full"
-                              title="Website Preview"
-                            />
+                        ) : (
+                          <div className="text-center text-white/60">
+                            <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                            <p>Single HTML file generated</p>
                           </div>
-                        </div>
-                      ) : (
-                        <iframe
-                          srcDoc={generatedCode}
-                          className="w-full h-full"
-                          title="Website Preview"
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-center">
-                      <div>
-                        <Eye className="w-16 h-16 mx-auto text-slate-400 mb-4" />
-                        <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                          No Preview Available
-                        </h3>
-                        <p className="text-slate-500 dark:text-slate-400">
-                          Generate a website first to see the preview here.
-                        </p>
+                        )}
                       </div>
-                    </div>
+                    </motion.div>
                   )}
-                </motion.div>
-              )}
+                </AnimatePresence>
+              </div>
             </div>
           </motion.div>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
 
-      {/* Pricing Modal */}
-      <PricingModal 
-        isOpen={showPricingModal} 
-        onClose={() => setShowPricingModal(false)} 
-      />
-
-      {/* Template Library Modal */}
-      <TemplateLibrary 
-        isOpen={showTemplateLibrary} 
-        onClose={() => setShowTemplateLibrary(false)}
-        onSelectTemplate={(template) => {
-          setPrompt(template.prompt);
-          setShowTemplateLibrary(false);
-        }}
-        isPro={isPro}
-      />
-
-      {/* Advanced Customization Modal */}
-      <AdvancedCustomization 
-        isOpen={showCustomization} 
-        onClose={() => setShowCustomization(false)}
-        onApplyCustomization={(settings) => {
-          setCustomizationSettings(settings);
-        }}
-        isPro={isPro}
-        onUpgrade={() => {
-          setShowCustomization(false);
-          setShowPricingModal(true);
-        }}
-      />
+      {/* Modals */}
+      {showPricingModal && (
+        <PricingModal onClose={() => setShowPricingModal(false)} />
+      )}
+      
+      {showTemplateLibrary && (
+        <TemplateLibrary 
+          onClose={() => setShowTemplateLibrary(false)}
+          onSelectTemplate={(template) => {
+            setPrompt(template.prompt);
+            setShowTemplateLibrary(false);
+          }}
+        />
+      )}
+      
+      {showCustomization && (
+        <AdvancedCustomization
+          onClose={() => setShowCustomization(false)}
+          onSave={(settings) => {
+            setCustomizationSettings(settings);
+            setShowCustomization(false);
+          }}
+          currentSettings={customizationSettings}
+        />
+      )}
     </div>
   );
 }
