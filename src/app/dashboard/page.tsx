@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import MonacoEditor from '@monaco-editor/react';
 import { 
-  Sparkles, 
   Code, 
   Eye, 
   Download, 

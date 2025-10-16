@@ -20,7 +20,7 @@ export type HeroWaveProps = {
   onPromptSubmit?: (value: string) => void;
 };
 
-export function HeroWave({ className, style, extendLeftPx = 320, title = "AI Website Generator", subtitle = "Describe your vision and watch it come to life", placeholder = "Describe what you want to create...", buttonText = "Generate", onPromptSubmit }: HeroWaveProps) {
+export function HeroWave({ className, style, extendLeftPx = 320, buttonText = "Generate", onPromptSubmit }: HeroWaveProps) {
   const [prompt, setPrompt] = useState("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const waveRef = useRef<HTMLDivElement | null>(null);
@@ -109,10 +109,10 @@ export function HeroWave({ className, style, extendLeftPx = 320, title = "AI Web
     clearTimers();
     schedule(step, 400);
     return () => {
-      typingStateRef.current.running = false;
+      const currentTypingState = typingStateRef.current;
+      currentTypingState.running = false;
       clearTimers();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prompt]);
 
   useEffect(() => {
@@ -503,14 +503,14 @@ export function HeroWave({ className, style, extendLeftPx = 320, title = "AI Web
 
       const waveWidth = cameraWidth;
       const span = waveWidth + EXTEND_LEFT_PX;
-      let barCount = Math.min(
+      const barCount = Math.min(
         MAX_BARS,
         Math.max(1, Math.floor((span + FIXED_BAR_GAP) / (FIXED_BAR_WIDTH + FIXED_BAR_GAP)))
       );
       const gap = barCount > 1 ? (span - barCount * FIXED_BAR_WIDTH) / (barCount - 1) : 0;
       currentBarCount = barCount;
 
-      const totalW = span;
+
       const startX = -waveWidth / 2 - EXTEND_LEFT_PX;
       const instCnt = barCount * 2;
       barCenters = new Float32Array(barCount);
@@ -652,7 +652,7 @@ export function HeroWave({ className, style, extendLeftPx = 320, title = "AI Web
 
       const waveWidth = cameraWidth;
       const span = waveWidth + EXTEND_LEFT_PX;
-      let barCount = Math.min(
+      const barCount = Math.min(
         MAX_BARS,
         Math.max(1, Math.floor((span + FIXED_BAR_GAP) / (FIXED_BAR_WIDTH + FIXED_BAR_GAP)))
       );
@@ -662,7 +662,7 @@ export function HeroWave({ className, style, extendLeftPx = 320, title = "AI Web
         currentBarCount = barCount;
         createInstancedBars();
       } else {
-        const totW = span;
+
         const startX = -waveWidth / 2 - EXTEND_LEFT_PX;
         const aX = instancedBars!.geometry.getAttribute("aXPos") as THREE.InstancedBufferAttribute;
         const aT = instancedBars!.geometry.getAttribute("aPosNorm") as THREE.InstancedBufferAttribute;
@@ -778,7 +778,11 @@ export function HeroWave({ className, style, extendLeftPx = 320, title = "AI Web
     listeners.push(() => ro.disconnect());
 
     const onVisibility = () => {
-      document.hidden ? gsap.globalTimeline.pause() : gsap.globalTimeline.resume();
+      if (document.hidden) {
+        gsap.globalTimeline.pause();
+      } else {
+        gsap.globalTimeline.resume();
+      }
     };
     document.addEventListener("visibilitychange", onVisibility);
     listeners.push(() => document.removeEventListener("visibilitychange", onVisibility));
@@ -796,7 +800,7 @@ export function HeroWave({ className, style, extendLeftPx = 320, title = "AI Web
         }
       } catch {}
     };
-  }, []);
+  }, [extendLeftPx]);
 
   return (
     <section

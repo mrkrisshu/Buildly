@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthProvider';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { 
   ArrowRight, 
   LogOut, 
@@ -568,9 +569,11 @@ export default function Home() {
                     transition={{ duration: 0.3 }}
                   >
                     <div className="w-24 h-24 mx-auto mb-4 relative">
-                      <img 
+                      <Image 
                         src={step.illustration}
                         alt={step.title}
+                        width={96}
+                        height={96}
                         className="w-full h-full object-cover rounded-2xl opacity-80 group-hover:opacity-100 transition-opacity duration-300"
                       />
                       <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-20 rounded-2xl`} />
@@ -680,9 +683,11 @@ export default function Home() {
                 className="group relative bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-all duration-300"
               >
                 <div className="aspect-video relative overflow-hidden">
-                  <img 
+                  <Image 
                     src={demo.image}
                     alt={demo.title}
+                    width={400}
+                    height={225}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -763,9 +768,11 @@ export default function Home() {
                 className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-all duration-300"
               >
                 <div className="flex items-center mb-6">
-                  <img 
+                  <Image 
                     src={testimonial.avatar}
                     alt={testimonial.name}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full grayscale mr-4"
                   />
                   <div>

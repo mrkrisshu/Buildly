@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Presentation, Download, Sparkles, FileText, Wand2, Palette } from 'lucide-react';
 import PptxGenJS from 'pptxgenjs';
 import { useAuth } from '@/contexts/AuthProvider';
@@ -615,9 +616,11 @@ export default function PPTGenerator() {
                             animate={{ opacity: 1 }}
                             className="mb-3 sm:mb-4"
                           >
-                            <img
+                            <Image
                               src={slide.image.src.small}
                               alt={slide.image.alt}
+                              width={300}
+                              height={128}
                               className="w-full h-24 sm:h-32 object-cover rounded-lg border border-white/20"
                               onError={(e) => {
                                 console.error('Failed to load image:', slide.image?.src.small);
